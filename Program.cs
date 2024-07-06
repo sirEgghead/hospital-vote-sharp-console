@@ -11,14 +11,32 @@ namespace hospitalvote
         public static async Task Main(string[] args)
         {
             var url = "https://www.soliant.com/most-beautiful-hospital-contest/vote/southeast-health/";
-            using (var driver = UndetectedChromeDriver.Create(driverExecutablePath: await new ChromeDriverInstaller().Auto()))
-            {
-                while (true)
+            while (true) {
+                using (var driver = UndetectedChromeDriver.Create(driverExecutablePath: await new ChromeDriverInstaller().Auto()))
                 {
+                    string baseWindow = driver.WindowHandles[0];
+                    driver.SwitchTo().NewWindow(WindowType.Tab);
+                    string tab1 = driver.CurrentWindowHandle.ToString();
                     driver.GoToUrl(url);
+                    driver.SwitchTo().NewWindow(WindowType.Tab);
+                    string tab2 = driver.CurrentWindowHandle.ToString();
+                    driver.GoToUrl(url);
+                    driver.SwitchTo().NewWindow(WindowType.Tab);
+                    string tab3 = driver.WindowHandles.Last();
+                    driver.GoToUrl(url);
+                    driver.SwitchTo().Window(tab1);
                     await driver.Reconnect(timeout: 2500);
+                    driver.SwitchTo().Window(tab1);
                     driver.FindElement(By.Id("recaptcha")).Click();
-                    WebDriverWait wait = new(driver, TimeSpan.FromSeconds(5));
+                    driver.SwitchTo().Window(tab2);
+                    await driver.Reconnect(timeout: 2500);
+                    driver.SwitchTo().Window(tab2);
+                    driver.FindElement(By.Id("recaptcha")).Click();
+                    driver.SwitchTo().Window(tab3);
+                    await driver.Reconnect(timeout: 2500);
+                    driver.SwitchTo().Window(tab3);
+                    driver.FindElement(By.Id("recaptcha")).Click();
+                    WebDriverWait wait = new(driver, TimeSpan.FromSeconds(8));
                     wait.Until(driver => driver.FindElement(By.ClassName("btn-default")).Displayed);
                     var topThree = driver.FindElements(By.ClassName("top-three"));
                     Thread.Sleep(500);
