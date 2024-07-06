@@ -4,7 +4,6 @@ using OpenQA.Selenium.Chrome;
 using OpenQA.Selenium.DevTools.V100.ServiceWorker;
 using OpenQA.Selenium.Support.UI;
 using SeleniumUndetectedChromeDriver;
-using System.Threading.Tasks;
 
 namespace hospitalvote
 {
@@ -16,16 +15,13 @@ namespace hospitalvote
         static int numTabs = 3;
         static int numThreads = 1;
         static List<string> tabHandles = new List<string>();
-        public static void Main(string[] args)
+        public static async Task Main(string[] args)
         {
             bool boolHelp = false;
             var opts = new OptionSet()
             {
                 { "u|uctimeout=", "the reconnect timeout to bypass Cloudflare", v => ucTimeout = Int32.Parse(v) },
                 { "t|tabs=", "the number of tabs to run", v => numTabs = Int32.Parse(v) },
-                //{ "r|threads=", "number of threads. each thread controls a separate window", v => numThreads = int.Parse(v) },
-                // multithreading not possible with uc driver due to tab needing to be in focus for cloudflare
-                // same reason we can't run chrome headless
                 { "h|help", "show this message and exit", v => boolHelp = v != null },
             };
 
@@ -44,19 +40,6 @@ namespace hospitalvote
                 showHelp(opts);
                 return;
             }
-
-            var tasks = new Task[numThreads];
-            for (int i = 0; i < numThreads; i++)
-            {
-                tasks[i] = Task.Factory.StartNew(() => Worker());
-            }
-            Console.WriteLine("Press enter to exit...\n\n");
-            Console.ReadLine();
-            Task.WaitAll(tasks);
-        }
-
-        private static async void Worker()
-        {
             while (true)
             {
                 using (var driver = UndetectedChromeDriver.Create(driverExecutablePath: await new ChromeDriverInstaller().Auto()))
