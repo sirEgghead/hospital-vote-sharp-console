@@ -6,9 +6,11 @@
     <RootNamespace>hospital_vote_sharp_console</RootNamespace>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
+    <AllowUnsafeBlocks>False</AllowUnsafeBlocks>
   </PropertyGroup>
 
   <ItemGroup>
+    <PackageReference Include="NDesk.Options" Version="0.2.1" />
     <PackageReference Include="Selenium.UndetectedChromeDriver" Version="1.1.3" />
   </ItemGroup>
 

@@ -1,4 +1,5 @@
-﻿using OpenQA.Selenium;
+﻿using NDesk.Options;
+using OpenQA.Selenium;
 using OpenQA.Selenium.Chrome;
 using OpenQA.Selenium.DevTools.V100.ServiceWorker;
 using OpenQA.Selenium.Support.UI;
@@ -8,42 +9,69 @@ namespace hospitalvote
 {
     class MainClass
     {
+        const string url = "https://www.soliant.com/most-beautiful-hospital-contest/vote/southeast-health/";
+        const string thankyou = "https://www.soliant.com/most-beautiful-hospital-contest/vote/hospital-detail/thank-you/";
+        static int ucTimeout = 2000;
+        static int numTabs = 3;
+        static List<string> tabHandles = new List<string>();
         public static async Task Main(string[] args)
         {
-            var url = "https://www.soliant.com/most-beautiful-hospital-contest/vote/southeast-health/";
+            bool boolHelp = false;
+            var opts = new OptionSet()
+            {
+                { "u|uctimeout=", "the reconnect timeout to bypass Cloudflare", v => ucTimeout = Int32.Parse(v) },
+                { "t|tabs=", "the number of tabs to run", v => numTabs = Int32.Parse(v) },
+                { "h|help", "show this message and exit", v => boolHelp = v != null },
+            };
+
+            try
+            {
+                opts.Parse(args);
+            }
+            catch (OptionException e)
+            {
+                Console.WriteLine(e.Message);
+                return;
+            }
+
+            if (boolHelp)
+            {
+                showHelp(opts);
+                return;
+            }
+
             while (true) {
                 using (var driver = UndetectedChromeDriver.Create(driverExecutablePath: await new ChromeDriverInstaller().Auto()))
                 {
-                    string baseWindow = driver.WindowHandles[0];
-                    driver.SwitchTo().NewWindow(WindowType.Tab);
-                    string tab1 = driver.CurrentWindowHandle.ToString();
-                    driver.GoToUrl(url);
-                    driver.SwitchTo().NewWindow(WindowType.Tab);
-                    string tab2 = driver.CurrentWindowHandle.ToString();
-                    driver.GoToUrl(url);
-                    driver.SwitchTo().NewWindow(WindowType.Tab);
-                    string tab3 = driver.WindowHandles.Last();
-                    driver.GoToUrl(url);
-                    driver.SwitchTo().Window(tab1);
-                    await driver.Reconnect(timeout: 2500);
-                    driver.SwitchTo().Window(tab1);
-                    driver.FindElement(By.Id("recaptcha")).Click();
-                    driver.SwitchTo().Window(tab2);
-                    await driver.Reconnect(timeout: 2500);
-                    driver.SwitchTo().Window(tab2);
-                    driver.FindElement(By.Id("recaptcha")).Click();
-                    driver.SwitchTo().Window(tab3);
-                    await driver.Reconnect(timeout: 2500);
-                    driver.SwitchTo().Window(tab3);
-                    driver.FindElement(By.Id("recaptcha")).Click();
+                    for (int i = 0; i < numTabs; i++)
+                    {
+                        driver.SwitchTo().NewWindow(WindowType.Tab);
+                        tabHandles.Add(driver.CurrentWindowHandle.ToString());
+                        driver.GoToUrl(url);
+                    }
+                    foreach (string tab in tabHandles)
+                    {
+                        driver.SwitchTo().Window(tab);
+                        await driver.Reconnect(timeout: ucTimeout);
+                        driver.SwitchTo().Window(tab);
+                        driver.FindElement(By.Id("recaptcha")).Click();
+                    }
                     WebDriverWait wait = new(driver, TimeSpan.FromSeconds(8));
+                    if (!driver.Url.Contains(thankyou)) driver.GoToUrl(thankyou);
                     wait.Until(driver => driver.FindElement(By.ClassName("btn-default")).Displayed);
                     var topThree = driver.FindElements(By.ClassName("top-three"));
-                    Thread.Sleep(500);
                     if (topThree.Count() == 0) continue;
-                    printStatus(topThree);
+                        printStatus(topThree);
+                    driver.Quit();
+                    tabHandles.Clear();
                 }
             }
+        }
+
+        private static void showHelp(OptionSet options)
+        {
+            Console.WriteLine("Options:");
+            options.WriteOptionDescriptions(Console.Out);
         }
 
         private static int getSehPlace(System.Collections.ObjectModel.ReadOnlyCollection<IWebElement> topThree)
