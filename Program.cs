@@ -101,6 +101,10 @@ namespace hospitalvote
             int margin12 = p1v - p2v;
             int margin13 = p1v - p3v;
             int sehPlace = getSehPlace(topThree);
+            Console.WriteLine();
+            Console.WriteLine();
+            Console.WriteLine();
+            Console.WriteLine("----------------------------------------------");
             switch (sehPlace)
             {
                 case 1:
@@ -126,6 +130,10 @@ namespace hospitalvote
                     Console.WriteLine(thirdPlaceName + " - " + thirdPlaceVotes);
                     break;
             }
+            Console.WriteLine("----------------------------------------------");
+            Console.WriteLine();
+            Console.WriteLine();
+            Console.WriteLine();
             return;
         }
     }
